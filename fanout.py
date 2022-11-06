@@ -60,7 +60,7 @@ class Graph:
 def createDict(filename):
     benchfile = open(filename)
     bench = benchfile.read().splitlines()
-    bench = [line for line in bench if '#' not in line and '' is not line]
+    bench = [line for line in bench if '#' not in line and '' != line]
     inputs = [line for line in bench if 'INPUT' in line]
     # outputs = [line for line in bench if 'OUTPUT' in line]
     circuit = [line for line in bench if (line not in inputs) and 'OUTPUT' not in line]
@@ -96,28 +96,41 @@ def getFanIn(graph, inputs, gate):
     return
 
 
-def pandas(filename):
-    df = pd.read_table(filename, delimiter='\t')
-    print(df)
-    print(df.query('G2 == G3'))
+def getControl(benchfile, testfile):
+    circ, wire_in = createDict(benchfile)
+    df = pd.read_table(testfile, delimiter='\t')
 
+    wire_in.reverse()
+    for i in wire_in:
+        df = df.sort_values(by=i)
+    wire_in.reverse()
 
-
+    control  = 0
+    for input in wire_in:
+        df = df.sort_values(by=input)
+        df = df.reset_index(drop=True)
+        for key in circ:
+            print("control value of " + input + " on wire " + key + ":", end=' ')
+            for index in range(len(df) // 2):
+                control += df.loc[index, key] ^ df.loc[(index + len(df) // 2), key]
+            print(control)
+            control = 0
+                
 
 
 
 if __name__ == "__main__":
 
-    circ,i = createDict("adder.txt")
+    # circ,i = createDict("adder.txt")
     # graph = createGraphFromDict(circ)
     # graph.DFS('G9')
     # circ.DFS('G9')
     # for line in circ:
-        # print(line)
+    #     print(line)
     # print(circ)
     # print(i)
 
-    pandas('adder_benchout.txt')
+    getControl('adder.txt', 'adder_benchtest.txt')
 
     # string = "THIS IS A STRING"
     
