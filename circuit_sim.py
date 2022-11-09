@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import product
 from typing import Tuple
+from functools import reduce
 import pandas as pd
 import numpy as np
 
@@ -94,15 +95,19 @@ def gateSim(gate: str, inputs: list) -> int: # gate: 'OR', inputList: [1, 0]
    elif gate == 'DFF':
       return inputs[0]
    elif gate == 'AND':
-      return inputs[1] and inputs[0]
+      return 0 + all(inputs)
    elif gate == 'NAND':
-      return 1 - (inputs[1] and inputs[0])
+      return 1 - all(inputs)
    elif gate == 'OR':
-      return inputs[1] or inputs[0]
+      return 0 + any(inputs)
    elif gate == 'NOR':
-      return 1 - (inputs[1] or inputs[0])
+      return 1 - any(inputs)
    elif gate == 'XOR':
-      return inputs[1] ^ inputs[0]
+      return inputs.count(1) % 2
+   elif gate == 'XNOR':
+      return (inputs.count(1) + 1) % 2
+   else:
+      raise Exception("ERROR: GATE TYPE " + gate + " NOT SUPPORTED")
 
 
 
@@ -128,14 +133,15 @@ def getControl(benchfile: str) -> pd.DataFrame:
    #    df = df.sort_values(by=i)
    # wire_in.reverse()
    # print(df)
+   df.to_csv("truthtable.csv", index=False)
 
 
    # getting control values
    control_df = pd.DataFrame(np.zeros((len(circ), len(wire_in))), index=circ.keys(), columns=wire_in)
    control = 0
+
    for input in wire_in:
       df = df.sort_values(by=input).reset_index(drop=True)
-      # df = df.reset_index(drop=True)
       for key in circ:
          # print("control value of " + input + " on wire " + key + ":", end=' ')
          for index in range(len(df) // 2):
@@ -143,6 +149,13 @@ def getControl(benchfile: str) -> pd.DataFrame:
          # print(control)
          control_df.loc[key, input] = control / (2 ** len(input))
          control = 0
+
+   # count = 0
+   # for val in wire_in:
+   #    count += 1
+   #    for key in circ:
+   #       for index in range(len(df) // 2):
+   #          control += df.loc[index, key] ^ df.loc[(index + (2 ** count))]
    
    return control_df
    
@@ -154,7 +167,9 @@ def getControl(benchfile: str) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-   control_df = getControl('s27.bench')
+   control_df = getControl('s298.bench')
+
+   control_df.to_csv("output.csv")
 
 
    # vals = [[i+4*j for i in range(4)] for j in range(3)]
