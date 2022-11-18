@@ -147,7 +147,7 @@ def getControl(benchfile: str) -> pd.DataFrame:
          for index in range(len(df) // 2):
             control += df.loc[index, key] ^ df.loc[(index + len(df) // 2), key]
          # print(control)
-         control_df.loc[key, input] = control / (2 ** len(input))
+         control_df.loc[key, input] = control / (2 ** len(wire_in))
          control = 0
 
    # count = 0
@@ -161,20 +161,47 @@ def getControl(benchfile: str) -> pd.DataFrame:
    
 
 
+def randControl(benchfile: str):
+   circ, wire_in = createDict(benchfile)
+   control_df = pd.DataFrame(np.zeros((len(circ), len(wire_in))), index=circ.keys(), columns=wire_in)
+
+
+   num_samples = 32768
+   if num_samples > (2 ** len(wire_in)):
+       num_samples = 2 ** len(wire_in)
+
+   num_samples = 50
+
+
+   for index, wire in enumerate(wire_in):
+       # prev_combinations = set()
+       prev_combinations = []
+       control_vals = {i: 0 for i in circ.keys()}
+       rand_comb = np.zeros(len(wire_in), dtype=int).tolist()
+       for i in range(num_samples):
+           while rand_comb in prev_combinations:
+               randint = np.random.randint(2 ** len(wire_in))
+               randint_bin = bin(randint).split('b')[1]
+               rand_comb = [int(k) for k in randint_bin]
+               rand_comb[index] = 0
+               # rand_comb = tuple(rand_comb)
+               # roll until new combination
+           prev_combinations.append(rand_comb)
+           netlist0 = sim(rand_comb, circ, wire_in)
+           rand_comb[index] = 1
+           netlist1 = sim(rand_comb, circ, wire_in)
+           for key in control_vals:
+               control_vals[key] += netlist0[key] ^ netlist1[key]
+       print(control_vals)
 
 
 
 
 
 if __name__ == "__main__":
-   control_df = getControl('s298.bench')
+   control_df = getControl('s27.bench')
 
    control_df.to_csv("output.csv")
-
-
-   # vals = [[i+4*j for i in range(4)] for j in range(3)]
-   # print(vals)
-   # print(vals[2][3])
 
 
    

@@ -1,0 +1,20 @@
+INPUT(G1)
+INPUT(CLK)
+
+OUTPUT(G5)
+OUTPUT(G6)
+
+
+G2 = NOT(G1)
+G3 = NAND(G1, CLK)
+G4 = NAND(G2, CLK)
+G5 = NAND(G3, G6)
+G6 = NAND(G4, G5)
+
+
+
+#   G1  CLK G2  G3  G4  G5  G6
+#   0   0   1   1   1   X   X  
+#   0   1   1   1   0   0   1
+#   1   0   0   1   1   X   X
+#   1   1   0   0   0   1   0    
